@@ -75,6 +75,27 @@ if [ -d /data ] && [ "$(stat -c %u /data)" = "0" ]; then
 fi
 mkdir -p /data/.openclaw /data/workspace 2>/dev/null || true
 chown -R node:node /data/.openclaw /data/workspace 2>/dev/null || true
+
+# Seed default config on first boot if none exists.
+# Sets controlUi.allowedOrigins from RAILWAY_PUBLIC_DOMAIN for security.
+if [ ! -f /data/.openclaw/openclaw.json ]; then
+  ORIGIN=""
+  if [ -n "$RAILWAY_PUBLIC_DOMAIN" ]; then
+    ORIGIN="https://$RAILWAY_PUBLIC_DOMAIN"
+  fi
+  cat > /data/.openclaw/openclaw.json <<CFG
+{
+  "agent": { "model": "anthropic/claude-sonnet-4-20250514" },
+  "gateway": {
+    "controlUi": {
+      "allowedOrigins": ["${ORIGIN}"]
+    }
+  }
+}
+CFG
+  chown node:node /data/.openclaw/openclaw.json
+fi
+
 exec su -s /bin/sh node -c "$*"
 ENTRY
 ENTRYPOINT ["docker-entrypoint.sh"]
