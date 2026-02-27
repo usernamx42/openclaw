@@ -76,16 +76,22 @@ fi
 mkdir -p /data/.openclaw /data/workspace 2>/dev/null || true
 chown -R node:node /data/.openclaw /data/workspace 2>/dev/null || true
 
-# Seed default config on first boot if none exists.
+# Seed default config if none exists or if it contains legacy keys.
 # Sets controlUi.allowedOrigins from RAILWAY_PUBLIC_DOMAIN for security.
-if [ ! -f /data/.openclaw/openclaw.json ]; then
+if [ ! -f /data/.openclaw/openclaw.json ] || grep -q '"agent"' /data/.openclaw/openclaw.json 2>/dev/null; then
   ORIGIN=""
   if [ -n "$RAILWAY_PUBLIC_DOMAIN" ]; then
     ORIGIN="https://$RAILWAY_PUBLIC_DOMAIN"
   fi
   cat > /data/.openclaw/openclaw.json <<CFG
 {
-  "agent": { "model": "anthropic/claude-sonnet-4-20250514" },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "anthropic/claude-sonnet-4-20250514"
+      }
+    }
+  },
   "gateway": {
     "controlUi": {
       "allowedOrigins": ["${ORIGIN}"]
