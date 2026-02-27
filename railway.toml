@@ -1,0 +1,11 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "node dist/index.js gateway --allow-unconfigured --bind lan --port 8080"
+# No HTTP /health endpoint exists — Railway uses TCP healthcheck by default
+# which is fine since the gateway listens on PORT and accepts connections.
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5
