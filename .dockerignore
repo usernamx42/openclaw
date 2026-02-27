@@ -38,23 +38,20 @@ apps/macos/.build
 apps/ios/build
 **/*.trace
 
-# large app trees not needed for CLI build
-apps/
+# large app trees not needed for CLI build — exclude specific subdirs
+# instead of broad vendor/ and apps/ excludes to avoid BuildKit negation issues.
+apps/macos
+apps/ios
+apps/android
 assets/
 Peekaboo/
 Swabble/
 Core/
 Users/
-vendor/
-
-# Needed for building the Canvas A2UI bundle during Docker image builds.
-# Keep the rest of apps/ and vendor/ excluded to avoid a large build context.
-!apps/shared/
-!apps/shared/OpenClawKit/
-!apps/shared/OpenClawKit/Tools/
-!apps/shared/OpenClawKit/Tools/CanvasA2UI/
-!apps/shared/OpenClawKit/Tools/CanvasA2UI/**
-!vendor/a2ui/
-!vendor/a2ui/renderers/
-!vendor/a2ui/renderers/lit/
-!vendor/a2ui/renderers/lit/**
+vendor/a2ui/.github
+vendor/a2ui/renderers/angular
+vendor/a2ui/renderers/python
+vendor/a2ui/renderers/java
+vendor/a2ui/renderers/web
+vendor/a2ui/docs
+vendor/a2ui/samples
