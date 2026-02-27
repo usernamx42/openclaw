@@ -4,7 +4,8 @@ dockerfilePath = "Dockerfile"
 
 [deploy]
 # Create data subdirs (volume may be fresh) then start the gateway.
-startCommand = "cd /app && mkdir -p /data/.openclaw /data/workspace && node dist/index.js gateway --allow-unconfigured --bind lan --port 8080"
+# Railway execs startCommand directly (no shell), so wrap in sh -c.
+startCommand = "sh -c 'mkdir -p /data/.openclaw /data/workspace && exec node /app/dist/index.js gateway --allow-unconfigured --bind lan --port 8080'"
 # No HTTP /health endpoint exists — Railway uses TCP healthcheck by default.
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
