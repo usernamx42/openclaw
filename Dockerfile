@@ -93,15 +93,21 @@ if [ ! -f /data/.openclaw/openclaw.json ]; then
     }
   },
   "gateway": {
+    "auth": {
+      "mode": "token"
+    },
     "trustedProxies": ["100.64.0.0/10", "10.0.0.0/8", "172.16.0.0/12"],
     "controlUi": {
-      "allowedOrigins": ["${ORIGIN}"]
+      "allowedOrigins": ["${ORIGIN}"],
+      "dangerouslyDisableDeviceAuth": true
     }
   },
   "channels": {
     "telegram": {
+      "enabled": true,
       "dmPolicy": "allowlist",
-      "allowFrom": [439388150]
+      "allowFrom": [439388150],
+      "groupPolicy": "open"
     }
   }
 }
