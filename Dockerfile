@@ -73,8 +73,14 @@ set -e
 if [ -d /data ] && [ "$(stat -c %u /data)" = "0" ]; then
   chown node:node /data
 fi
-mkdir -p /data/.openclaw /data/workspace 2>/dev/null || true
-chown -R node:node /data/.openclaw /data/workspace 2>/dev/null || true
+mkdir -p /data/.openclaw /data/workspace \
+  /data/workspace-aidar /data/workspace-igor \
+  /data/workspace-aisana /data/workspace-alibek \
+  /data/workspace-maria 2>/dev/null || true
+chown -R node:node /data/.openclaw /data/workspace \
+  /data/workspace-aidar /data/workspace-igor \
+  /data/workspace-aisana /data/workspace-alibek \
+  /data/workspace-maria 2>/dev/null || true
 
 # Seed default config on first boot only. Once seeded, the user/setup
 # wizard owns the file — never overwrite it on subsequent restarts.
@@ -83,35 +89,20 @@ if [ ! -f /data/.openclaw/openclaw.json ]; then
   if [ -n "$RAILWAY_PUBLIC_DOMAIN" ]; then
     ORIGIN="https://$RAILWAY_PUBLIC_DOMAIN"
   fi
-  cat > /data/.openclaw/openclaw.json <<CFG
-{
-  "agents": {
-    "defaults": {
-      "model": {
-        "primary": "anthropic/claude-sonnet-4-20250514"
-      }
-    }
-  },
-  "gateway": {
-    "auth": {
-      "mode": "token"
-    },
-    "trustedProxies": ["100.64.0.0/10", "10.0.0.0/8", "172.16.0.0/12"],
-    "controlUi": {
-      "allowedOrigins": ["${ORIGIN}"],
-      "dangerouslyDisableDeviceAuth": true
-    }
-  },
-  "channels": {
-    "telegram": {
-      "enabled": true,
-      "dmPolicy": "allowlist",
-      "allowFrom": [439388150],
-      "groupPolicy": "open"
-    }
-  }
-}
-CFG
+  node -e "
+    var c={agents:{defaults:{model:{primary:'anthropic/claude-sonnet-4-20250514'}},list:[
+      {id:'aidar','default':true,name:'Aidar',workspace:'/data/workspace-aidar',identity:{name:'Aidar',emoji:'\ud83d\udd27',theme:'Tech Lead & AI Architect'}},
+      {id:'igor',name:'Igor',workspace:'/data/workspace-igor',identity:{name:'Igor',emoji:'\ud83d\udee1\ufe0f',theme:'DevSecOps & Security Specialist'}},
+      {id:'aisana',name:'Aisana',workspace:'/data/workspace-aisana',identity:{name:'Aisana',emoji:'\ud83c\udfa8',theme:'UI/UX Designer'}},
+      {id:'alibek',name:'Alibek',workspace:'/data/workspace-alibek',identity:{name:'Alibek',emoji:'\u2705',theme:'QA Lead & Testing Specialist'}},
+      {id:'maria',name:'Maria',workspace:'/data/workspace-maria',identity:{name:'Maria',emoji:'\ud83d\udcc8',theme:'Marketing Lead & GTM Strategist'}}
+    ]},commands:{native:'auto',nativeSkills:'auto',restart:true,ownerDisplay:'raw'},
+    channels:{telegram:{enabled:true,dmPolicy:'allowlist',allowFrom:[439388150],groupPolicy:'open',streaming:'off'}},
+    bindings:[{agentId:'aidar',comment:'Default Telegram to Aidar',match:{channel:'telegram'}}],
+    gateway:{auth:{mode:'token'},trustedProxies:['100.64.0.0/10','10.0.0.0/8','172.16.0.0/12'],
+    controlUi:{allowedOrigins:['${ORIGIN}'],dangerouslyDisableDeviceAuth:true}}};
+    require('fs').writeFileSync('/data/.openclaw/openclaw.json',JSON.stringify(c,null,2));
+  "
   chown node:node /data/.openclaw/openclaw.json
 fi
 
