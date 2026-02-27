@@ -63,6 +63,22 @@ ENV NODE_ENV=production
 # This reduces the attack surface by preventing container escape via root privileges
 USER node
 
+# Prepare volume mount point so Railway/Docker volumes are writable by node user.
+# The entrypoint fixes ownership then drops to node via exec su.
+USER root
+COPY --chmod=755 <<'ENTRY' /usr/local/bin/docker-entrypoint.sh
+#!/bin/sh
+set -e
+# Fix volume permissions if /data exists and is root-owned
+if [ -d /data ] && [ "$(stat -c %u /data)" = "0" ]; then
+  chown node:node /data
+fi
+mkdir -p /data/.openclaw /data/workspace 2>/dev/null || true
+chown -R node:node /data/.openclaw /data/workspace 2>/dev/null || true
+exec su -s /bin/sh node -c "$*"
+ENTRY
+ENTRYPOINT ["docker-entrypoint.sh"]
+
 # Start gateway server with default config.
 # Binds to loopback (127.0.0.1) by default for security.
 #
