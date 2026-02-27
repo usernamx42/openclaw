@@ -76,9 +76,9 @@ fi
 mkdir -p /data/.openclaw /data/workspace 2>/dev/null || true
 chown -R node:node /data/.openclaw /data/workspace 2>/dev/null || true
 
-# Seed default config if none exists or if it contains legacy keys.
-# Sets controlUi.allowedOrigins from RAILWAY_PUBLIC_DOMAIN for security.
-if [ ! -f /data/.openclaw/openclaw.json ] || grep -q '"agent"' /data/.openclaw/openclaw.json 2>/dev/null; then
+# Seed default config on first boot only. Once seeded, the user/setup
+# wizard owns the file — never overwrite it on subsequent restarts.
+if [ ! -f /data/.openclaw/openclaw.json ]; then
   ORIGIN=""
   if [ -n "$RAILWAY_PUBLIC_DOMAIN" ]; then
     ORIGIN="https://$RAILWAY_PUBLIC_DOMAIN"
