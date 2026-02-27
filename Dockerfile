@@ -97,6 +97,12 @@ if [ ! -f /data/.openclaw/openclaw.json ] || grep -q '"agent"' /data/.openclaw/o
     "controlUi": {
       "allowedOrigins": ["${ORIGIN}"]
     }
+  },
+  "channels": {
+    "telegram": {
+      "dmPolicy": "allowlist",
+      "allowFrom": [439388150]
+    }
   }
 }
 CFG
