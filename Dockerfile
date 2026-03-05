@@ -14,20 +14,10 @@ RUN apt-get update && \
     pip3 install --no-cache-dir --break-system-packages flask==3.0.2 pillow==10.4.0 && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Clone Star Office UI and patch known frontend syntax bug (duplicate else block breaks try/catch)
+# Clone Star Office UI and patch known bugs
 RUN git clone --depth 1 https://github.com/ringhyacinth/Star-Office-UI.git /opt/star-office && \
-    python3 -c "
-p='/opt/star-office/frontend/index.html'
-t=open(p).read()
-bad='                    } else {\n                        if (!typewriterTarget || typewriterTarget !== nextLine) {\n                            typewriterTarget = nextLine;\n                            typewriterText = \"\";\n                            typewriterIndex = 0;\n                        }\n                        }\n'
-if bad in t: open(p,'w').write(t.replace(bad,''))
-" && \
-    python3 -c "
-p='/opt/star-office/backend/app.py'
-t=open(p).read()
-open(p,'w').write(t.replace('data = request.get_json()\n        if not isinstance(data, dict):\n            return jsonify({\"status\": \"error\", \"msg\": \"invalid json\"}), 400\n        state = load_state()',
-'data = request.get_json(force=True, silent=True)\n        if not isinstance(data, dict):\n            return jsonify({\"status\": \"error\", \"msg\": \"invalid json\"}), 400\n        state = load_state()'))
-" && \
+    python3 -c "p='/opt/star-office/frontend/index.html'; t=open(p).read(); bad='                    } else {\n                        if (!typewriterTarget || typewriterTarget !== nextLine) {\n                            typewriterTarget = nextLine;\n                            typewriterText = \"\";\n                            typewriterIndex = 0;\n                        }\n                        }\n'; open(p,'w').write(t.replace(bad,'')) if bad in t else None" && \
+    python3 -c "p='/opt/star-office/backend/app.py'; t=open(p).read(); open(p,'w').write(t.replace('data = request.get_json()\n        if not isinstance(data, dict):', 'data = request.get_json(force=True, silent=True)\n        if not isinstance(data, dict):'))" && \
     chown -R node:node /opt/star-office
 
 RUN corepack enable
