@@ -121,10 +121,14 @@ if [ -f /data/.openclaw/openclaw.json ]; then
     var f='/data/.openclaw/openclaw.json';
     var c=JSON.parse(require('fs').readFileSync(f,'utf8'));
     if(!c.plugins) c.plugins={};
-    if(!c.plugins['star-office']) {
-      c.plugins['star-office']={stateFile:'/data/star-office/state.json'};
-      require('fs').writeFileSync(f,JSON.stringify(c,null,2));
+    if(!c.plugins.entries) c.plugins.entries={};
+    // Clean up invalid key from previous deploy attempt
+    if(c.plugins['star-office']) { delete c.plugins['star-office']; }
+    if(!c.plugins.entries) c.plugins.entries={};
+    if(!c.plugins.entries['star-office']) {
+      c.plugins.entries['star-office']={config:{stateFile:'/data/star-office/state.json'}};
     }
+    require('fs').writeFileSync(f,JSON.stringify(c,null,2));
   " 2>/dev/null || true
 fi
 
