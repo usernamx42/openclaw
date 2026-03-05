@@ -17,12 +17,13 @@ const plugin = {
     log.info(`[star-office] Pushing state to: ${target}`);
 
     // Reverse proxy: /star-office/* → local Star Office backend
-    api.registerHttpRoute({
-      path: "/star-office",
-      handler: async (req, res) => {
-        // Strip /star-office prefix for the upstream path
-        const upstreamPath = (req.url ?? "/").replace(/^\/star-office/, "") || "/";
+    api.registerHttpHandler(async (req, res) => {
+      const url = req.url ?? "/";
+      if (!url.startsWith("/star-office")) return false;
 
+      const upstreamPath = url.replace(/^\/star-office/, "") || "/";
+
+      return new Promise<boolean>((resolve) => {
         const proxyReq = httpRequest(
           {
             hostname: "127.0.0.1",
@@ -34,6 +35,7 @@ const plugin = {
           (proxyRes) => {
             res.writeHead(proxyRes.statusCode ?? 502, proxyRes.headers);
             proxyRes.pipe(res);
+            proxyRes.on("end", () => resolve(true));
           },
         );
 
@@ -41,10 +43,11 @@ const plugin = {
           log.warn(`[star-office] proxy error: ${String(err)}`);
           res.writeHead(502, { "Content-Type": "application/json" });
           res.end(JSON.stringify({ error: "Star Office backend unavailable" }));
+          resolve(true);
         });
 
         req.pipe(proxyReq);
-      },
+      });
     });
 
     // Hook: agent starts → "writing"
