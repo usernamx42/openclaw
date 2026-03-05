@@ -1,0 +1,13 @@
+{
+  "id": "star-office",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "url": {
+        "type": "string",
+        "description": "Star Office UI base URL (e.g. https://star-office-production.up.railway.app)"
+      }
+    }
+  }
+}

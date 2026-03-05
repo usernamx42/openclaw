@@ -4,6 +4,29 @@ FROM node:22-bookworm@sha256:cd7bcd2e7a1e6f72052feb023c7f6b722205d3fcab7bbcbd2d1
 RUN curl -fsSL https://bun.sh/install | bash
 ENV PATH="/root/.bun/bin:${PATH}"
 
+# Install Python + Star Office UI dependencies
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      python3 python3-pip git && \
+    pip3 install --no-cache-dir --break-system-packages flask==3.0.2 pillow==10.4.0 && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Clone Star Office UI and patch known frontend syntax bug (duplicate else block breaks try/catch)
+RUN git clone --depth 1 https://github.com/ringhyacinth/Star-Office-UI.git /opt/star-office && \
+    python3 -c "
+p='/opt/star-office/frontend/index.html'
+t=open(p).read()
+bad='                    } else {\n                        if (!typewriterTarget || typewriterTarget !== nextLine) {\n                            typewriterTarget = nextLine;\n                            typewriterText = \"\";\n                            typewriterIndex = 0;\n                        }\n                        }\n'
+if bad in t: open(p,'w').write(t.replace(bad,''))
+" && \
+    python3 -c "
+p='/opt/star-office/backend/app.py'
+t=open(p).read()
+open(p,'w').write(t.replace('data = request.get_json()\n        if not isinstance(data, dict):\n            return jsonify({\"status\": \"error\", \"msg\": \"invalid json\"}), 400\n        state = load_state()',
+'data = request.get_json(force=True, silent=True)\n        if not isinstance(data, dict):\n            return jsonify({\"status\": \"error\", \"msg\": \"invalid json\"}), 400\n        state = load_state()'))
+" && \
+    chown -R node:node /opt/star-office
+
 RUN corepack enable
 
 WORKDIR /app
@@ -81,6 +104,40 @@ chown -R node:node /data/.openclaw /data/workspace \
   /data/workspace-aidar /data/workspace-igor \
   /data/workspace-aisana /data/workspace-alibek \
   /data/workspace-maria 2>/dev/null || true
+
+# Set up Star Office UI persistent state on /data volume
+mkdir -p /data/star-office 2>/dev/null || true
+if [ ! -f /data/star-office/state.json ]; then
+  cp /opt/star-office/state.sample.json /data/star-office/state.json
+fi
+if [ ! -f /data/star-office/join-keys.json ]; then
+  cp /opt/star-office/join-keys.sample.json /data/star-office/join-keys.json 2>/dev/null || true
+fi
+if [ ! -f /data/star-office/runtime-config.json ]; then
+  cp /opt/star-office/runtime-config.sample.json /data/star-office/runtime-config.json 2>/dev/null || true
+fi
+# Symlink state files so Star Office reads from /data
+ln -sf /data/star-office/state.json /opt/star-office/state.json
+ln -sf /data/star-office/join-keys.json /opt/star-office/join-keys.json
+ln -sf /data/star-office/runtime-config.json /opt/star-office/runtime-config.json
+chown -R node:node /data/star-office
+
+# Inject star-office plugin config if not already present
+if [ -f /data/.openclaw/openclaw.json ]; then
+  node -e "
+    var f='/data/.openclaw/openclaw.json';
+    var c=JSON.parse(require('fs').readFileSync(f,'utf8'));
+    if(!c.plugins) c.plugins={};
+    if(!c.plugins['star-office']) {
+      c.plugins['star-office']={stateFile:'/data/star-office/state.json'};
+      require('fs').writeFileSync(f,JSON.stringify(c,null,2));
+    }
+  " 2>/dev/null || true
+fi
+
+# Start Star Office UI in background
+STAR_BACKEND_PORT="${STAR_OFFICE_PORT:-18791}" \
+  su -s /bin/sh node -c "python3 /opt/star-office/backend/app.py &"
 
 # Seed default config on first boot only. Once seeded, the user/setup
 # wizard owns the file — never overwrite it on subsequent restarts.
