@@ -126,7 +126,10 @@ if [ -f /data/.openclaw/openclaw.json ]; then
     if(c.plugins['star-office']) { delete c.plugins['star-office']; }
     if(!c.plugins.entries) c.plugins.entries={};
     if(!c.plugins.entries['star-office']) {
-      c.plugins.entries['star-office']={config:{stateFile:'/data/star-office/state.json'}};
+      c.plugins.entries['star-office']={enabled:true,config:{stateFile:'/data/star-office/state.json'}};
+    }
+    if(!c.plugins.entries['star-office'].enabled) {
+      c.plugins.entries['star-office'].enabled=true;
     }
     require('fs').writeFileSync(f,JSON.stringify(c,null,2));
   " 2>/dev/null || true

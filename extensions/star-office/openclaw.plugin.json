@@ -6,7 +6,11 @@
     "properties": {
       "url": {
         "type": "string",
-        "description": "Star Office UI base URL (e.g. https://star-office-production.up.railway.app)"
+        "description": "Star Office UI base URL for HTTP mode (e.g. https://star-office-production.up.railway.app)"
+      },
+      "stateFile": {
+        "type": "string",
+        "description": "Path to Star Office state.json file for local mode (default: /data/star-office/state.json)"
       }
     }
   }
