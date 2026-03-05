@@ -126,7 +126,7 @@ if [ -f /data/.openclaw/openclaw.json ]; then
     if(c.plugins['star-office']) { delete c.plugins['star-office']; }
     if(!c.plugins.entries) c.plugins.entries={};
     if(!c.plugins.entries['star-office']) {
-      c.plugins.entries['star-office']={enabled:true,config:{stateFile:'/data/star-office/state.json'}};
+      c.plugins.entries['star-office']={enabled:true,config:{url:'https://star-office-production.up.railway.app',stateFile:'/data/star-office/state.json'}};
     }
     if(!c.plugins.entries['star-office'].enabled) {
       c.plugins.entries['star-office'].enabled=true;
